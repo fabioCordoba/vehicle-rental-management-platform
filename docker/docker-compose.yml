@@ -1,0 +1,25 @@
+services:
+  postgres-db:
+    image: postgres:14.3
+    container_name: vehicle-rental-postgres-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWD}
+    ports:
+      - "5440:5432"
+    networks:
+      - vehicle-rental-network
+    volumes:
+      - dbvehicle-rental-data:/var/lib/postgresql/data
+
+
+
+networks:
+  vehicle-rental-network:
+    driver: bridge
+
+volumes:
+  dbvehicle-rental-data:
+
