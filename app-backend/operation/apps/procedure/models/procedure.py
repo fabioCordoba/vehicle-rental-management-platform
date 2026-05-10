@@ -9,8 +9,8 @@ class Procedure(BaseModel):
         COMPLETED = 'completed', 'Completed'
         CANCELLED = 'cancelled', 'Cancelled'
 
-    vehicle_id = models.IntegerField()
-    customer_id = models.IntegerField()
+    vehicle_id = models.UUIDField()
+    customer_id = models.UUIDField()
     request_date = models.DateField()
     start_date = models.DateField()
     end_date = models.DateField()

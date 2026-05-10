@@ -282,6 +282,9 @@ LOGGING = {
     },
 }
 
+# Vehicle microservice base URL (no trailing slash)
+VEHICLE_SERVICE_URL = os.getenv("VEHICLE_SERVICE_URL", "http://localhost:8001")
+
 # Admin url
 ADMIN_URL = "admin"
 

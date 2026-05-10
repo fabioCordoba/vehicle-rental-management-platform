@@ -1,4 +1,4 @@
-from django_filters import FilterSet, NumberFilter
+from django_filters import CharFilter, FilterSet, NumberFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
@@ -23,6 +23,8 @@ from apps.transport.serializers import (
 
 
 class TransportFilter(FilterSet):
+    make = CharFilter(field_name="make", lookup_expr="icontains")
+    model = CharFilter(field_name="model", lookup_expr="icontains")
     min_price = NumberFilter(field_name="daily_rental_price", lookup_expr="gte")
     max_price = NumberFilter(field_name="daily_rental_price", lookup_expr="lte")
     min_year = NumberFilter(field_name="year", lookup_expr="gte")
@@ -30,7 +32,7 @@ class TransportFilter(FilterSet):
 
     class Meta:
         model = Transport
-        fields = ["is_available", "condition", "make", "color"]
+        fields = ["make", "model", "is_available", "condition", "color"]
 
 
 class TransportViewSet(
@@ -56,7 +58,7 @@ class TransportViewSet(
         return TransportSerializer
 
     def get_permissions(self):
-        if self.action in ["list", "retrieve", "available"]:
+        if self.action in ["list", "retrieve", "available", "search_by_status"]:
             return [IsAuthenticated()]
         return [IsAdminUser()]
 
@@ -70,6 +72,29 @@ class TransportViewSet(
         """Returns only vehicles currently available for rental."""
         queryset = self.filter_queryset(
             self.get_queryset().filter(is_available=True)
+        )
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = TransportSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = TransportSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"], url_path="search-by-status")
+    def search_by_status(self, request):
+        """Filter vehicles by availability status. Query param: ?status=available|unavailable"""
+        status_param = request.query_params.get("status", "").lower()
+        if status_param == "available":
+            is_available = True
+        elif status_param == "unavailable":
+            is_available = False
+        else:
+            return Response(
+                {"detail": "Invalid status. Use 'available' or 'unavailable'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        queryset = self.filter_queryset(
+            self.get_queryset().filter(is_available=is_available)
         )
         page = self.paginate_queryset(queryset)
         if page is not None:
