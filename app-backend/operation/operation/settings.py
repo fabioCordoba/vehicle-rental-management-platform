@@ -28,6 +28,7 @@ DJANGO_APPS = [
 
 PROJECT_APPS = [
     "apps.core",
+    "apps.procedure",
 ]
 
 THIRD_APPS = [
