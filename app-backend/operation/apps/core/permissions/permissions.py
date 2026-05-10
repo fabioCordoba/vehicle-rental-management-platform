@@ -1,17 +1,35 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-class IsSuperOrReadOnly(BasePermission):
-    """Legacy: is_staff → escritura; cualquier autenticado → lectura."""
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_staff)
+class IsPlatformAdmin(BasePermission):
+    """Write access only for platform_admin users (is_staff=True in JWT)."""
 
-
-class IsAdminOrReadOnly(BasePermission):
-    """Legacy: role code_name='admin' → escritura."""
     def has_permission(self, request, view):
         return bool(
-            request.user and
-            request.user.is_authenticated and
-            request.user.roles.filter(code_name='admin').exists()
+            request.user
+            and request.user.is_authenticated
+            and request.user.is_staff
         )
+
+
+class IsSupervisorOrAbove(BasePermission):
+    """Write access for supervisor and platform_admin hierarchy levels."""
+
+    _allowed = {"supervisor", "platform_admin"}
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.hierarchy_level in self._allowed
+        )
+
+
+# ── Backwards-compatible aliases ──────────────────────────────────────────────
+
+class IsSuperOrReadOnly(IsPlatformAdmin):
+    """Alias kept for backwards compatibility. Prefer IsPlatformAdmin."""
+
+
+class IsAdminOrReadOnly(IsSupervisorOrAbove):
+    """Alias kept for backwards compatibility. Prefer IsSupervisorOrAbove."""

@@ -138,7 +138,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "utils.authentication.JWTAuthenticationFromAuth",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_FILTER_BACKENDS": (
@@ -205,16 +205,33 @@ CORS_ALLOW_HEADERS = [
 
 # DRF Spectacular (Swagger/OpenAPI)
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Authentication API",
-    "DESCRIPTION": "API for extracting and managing a livestock pedigree database.",
+    "TITLE": "Operation API",
+    "DESCRIPTION": (
+        "API for managing vehicle rental procedures. "
+        "Handles the lifecycle of rental requests: creation, status tracking, "
+        "and soft deletion of procedures."
+    ),
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
     "SERVERS": [
-        {"url": "http://localhost:8000", "description": "Development"},
-        {"url": "https://api.investment-tracker.com", "description": "Production"},
+        {"url": "http://localhost:8002", "description": "Development"},
     ],
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": "/api/",
+    "SWAGGER_UI_SETTINGS": {
+        "persistAuthorization": True,
+        "displayOperationId": False,
+    },
+    "SECURITY": [{"bearerAuth": []}],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+    },
 }
 
 # Logging
