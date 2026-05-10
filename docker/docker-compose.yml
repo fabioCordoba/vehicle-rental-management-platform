@@ -4,7 +4,7 @@ services:
     container_name: vehicle-rental-postgres-db
     restart: always
     environment:
-      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_DB: ${POSTGRES_DEFAULT_DB}
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWD}
     ports:
@@ -13,6 +13,7 @@ services:
       - vehicle-rental-network
     volumes:
       - dbvehicle-rental-data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
 
 
 
@@ -22,4 +23,3 @@ networks:
 
 volumes:
   dbvehicle-rental-data:
-
