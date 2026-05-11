@@ -1,8 +1,15 @@
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
+
+def health(request):
+    return JsonResponse({"status": "ok", "service": "operation"})
+
+
 urlpatterns = [
+    path("health/", health),
     path("admin/", admin.site.urls),
     # OpenAPI schema & docs
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

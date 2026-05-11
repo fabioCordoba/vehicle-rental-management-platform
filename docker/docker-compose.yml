@@ -1,11 +1,13 @@
 services:
+
+  # ── Database ───────────────────────────────────────────────────────────────
   postgres-db:
     image: postgres:14.3
     container_name: vehicle-rental-postgres-db
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DEFAULT_DB}
-      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_DB:       ${POSTGRES_DEFAULT_DB}
+      POSTGRES_USER:     ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWD}
     ports:
       - "5440:5432"
@@ -14,7 +16,114 @@ services:
     volumes:
       - dbvehicle-rental-data:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${POSTGRES_DEFAULT_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # ── Authentication microservice — internal port 8000 ──────────────────────
+  authentication-service:
+    build:
+      context: ../app-backend/authentication
+      dockerfile: Dockerfile
+    container_name: vehicle-rental-authentication
+    restart: unless-stopped
+    env_file:
+      - ../app-backend/authentication/.env
+    environment:
+      DB_HOST:       ${DATABASE_HOST}
+      DB_USER:       ${DATABASE_USER}
+      DB_PASSWORD:   ${DATABASE_PASSWD}
+      DB_NAME:       ${AUTH_DB_NAME}
+      DB_PORT:       ${DATABASE_PORT}
+      ALLOWED_HOSTS: "localhost,127.0.0.1,authentication-service"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - vehicle-rental-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health/' )\"  || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Vehicle microservice — internal port 8000 ─────────────────────────────
+  vehicle-service:
+    build:
+      context: ../app-backend/vehicle
+      dockerfile: Dockerfile
+    container_name: vehicle-rental-vehicle
+    restart: unless-stopped
+    env_file:
+      - ../app-backend/vehicle/.env
+    environment:
+      DB_HOST:       ${DATABASE_HOST}
+      DB_USER:       ${DATABASE_USER}
+      DB_PASSWORD:   ${DATABASE_PASSWD}
+      DB_NAME:       ${VEHICLES_DB_NAME}
+      DB_PORT:       ${DATABASE_PORT}
+      ALLOWED_HOSTS: "localhost,127.0.0.1,vehicle-service"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - vehicle-rental-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health/')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Operation microservice — internal port 8000 ───────────────────────────
+  operation-service:
+    build:
+      context: ../app-backend/operation
+      dockerfile: Dockerfile
+    container_name: vehicle-rental-operation
+    restart: unless-stopped
+    env_file:
+      - ../app-backend/operation/.env
+    environment:
+      DB_HOST:              ${DATABASE_HOST}
+      DB_USER:              ${DATABASE_USER}
+      DB_PASSWORD:          ${DATABASE_PASSWD}
+      DB_NAME:              ${OPERATION_DB_NAME}
+      DB_PORT:              ${DATABASE_PORT}
+      ALLOWED_HOSTS:        "localhost,127.0.0.1,operation-service"
+      VEHICLE_SERVICE_URL:  "http://vehicle-service:8000"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      vehicle-service:
+        condition: service_healthy
+    networks:
+      - vehicle-rental-network
+
+  # ── Nginx API Gateway — exposed on port 80 ────────────────────────────────
+  nginx-gateway:
+    image: nginx:1.27-alpine
+    container_name: vehicle-rental-gateway
+    restart: unless-stopped
+    ports:
+      - "8025:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - authentication-service
+      - vehicle-service
+      - operation-service
+    networks:
+      - vehicle-rental-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 
 networks:
