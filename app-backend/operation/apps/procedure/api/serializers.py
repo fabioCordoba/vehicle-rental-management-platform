@@ -1,6 +1,10 @@
 from rest_framework import serializers
 from apps.procedure.models import Procedure
-from apps.procedure.services.vehicle_client import get_vehicle
+from apps.procedure.services.vehicle_client import (
+    get_vehicle,
+    VehicleNotFound,
+    VehicleServiceUnavailable,
+)
 
 
 class ProcedureSerializer(serializers.ModelSerializer):
@@ -46,10 +50,15 @@ class ProcedureWriteSerializer(serializers.ModelSerializer):
             token = self.context.get("token", "")
             vehicle_id = attrs.get("vehicle_id")
             if vehicle_id:
-                vehicle = get_vehicle(str(vehicle_id), token)
-                if vehicle is None:
+                try:
+                    vehicle = get_vehicle(str(vehicle_id), token)
+                except VehicleNotFound:
                     raise serializers.ValidationError(
-                        {"vehicle_id": "Vehicle not found or vehicle service unavailable."}
+                        {"vehicle_id": "Vehicle not found."}
+                    )
+                except VehicleServiceUnavailable:
+                    raise serializers.ValidationError(
+                        {"vehicle_id": "Vehicle service is currently unavailable. Please try again later."}
                     )
                 if not vehicle.get("is_available"):
                     raise serializers.ValidationError(
