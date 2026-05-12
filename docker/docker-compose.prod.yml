@@ -50,6 +50,8 @@ services:
     image: fabiocordobadev/personal-authentication:latest
     container_name: vehicle-rental-authentication
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:9000:8000"
     environment:
       DEBUG:                "False"
       SECRET_KEY:           ${AUTH_SECRET_KEY}
@@ -87,6 +89,8 @@ services:
     image: fabiocordobadev/personal-vehicle:latest
     container_name: vehicle-rental-vehicle
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:9001:8000"
     environment:
       DEBUG:                "False"
       SECRET_KEY:           ${VEHICLE_SECRET_KEY}
@@ -124,6 +128,8 @@ services:
     image: fabiocordobadev/personal-operation:latest
     container_name: vehicle-rental-operation
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:9002:8000"
     environment:
       DEBUG:                "False"
       SECRET_KEY:           ${OPERATION_SECRET_KEY}
@@ -165,7 +171,7 @@ services:
     container_name: vehicle-rental-gateway
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8035:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d.prod:/etc/nginx/conf.d:ro

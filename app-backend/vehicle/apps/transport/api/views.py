@@ -58,7 +58,7 @@ class TransportViewSet(
         return TransportSerializer
 
     def get_permissions(self):
-        if self.action in ["list", "retrieve", "available", "search_by_status"]:
+        if self.action in ["list", "retrieve", "available", "search_by_status", "search"]:
             return [IsAuthenticated()]
         return [IsAdminUser()]
 
@@ -100,6 +100,49 @@ class TransportViewSet(
         if page is not None:
             serializer = TransportSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
+        serializer = TransportSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"], url_path="search")
+    def search(self, request):
+        """
+        Búsqueda de vehículos por marca, modelo y/o estado de disponibilidad.
+
+        Query params:
+          ?make=<texto>              — marca (búsqueda parcial, insensible a mayúsculas)
+          ?model=<texto>             — modelo (búsqueda parcial, insensible a mayúsculas)
+          ?status=available          — solo disponibles
+          ?status=unavailable        — solo no disponibles
+
+        Se pueden combinar libremente. Sin parámetros retorna todos los vehículos activos.
+        """
+        queryset = self.get_queryset()
+
+        make = request.query_params.get("make", "").strip()
+        model = request.query_params.get("model", "").strip()
+        status_param = request.query_params.get("status", "").strip().lower()
+
+        if make:
+            queryset = queryset.filter(make__icontains=make)
+
+        if model:
+            queryset = queryset.filter(model__icontains=model)
+
+        if status_param == "available":
+            queryset = queryset.filter(is_available=True)
+        elif status_param == "unavailable":
+            queryset = queryset.filter(is_available=False)
+        elif status_param:
+            return Response(
+                {"detail": "Valor de 'status' inválido. Use 'available' o 'unavailable'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = TransportSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = TransportSerializer(queryset, many=True)
         return Response(serializer.data)
 
