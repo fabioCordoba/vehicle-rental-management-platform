@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
@@ -8,7 +9,13 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
+
+def health(request):
+    return JsonResponse({"status": "ok", "service": "authentication"})
+
+
 urlpatterns = [
+    path("health/", health),
     path("admin/", admin.site.urls),
     # Authentication
     path("api/", include("apps.authentication.urls")),
