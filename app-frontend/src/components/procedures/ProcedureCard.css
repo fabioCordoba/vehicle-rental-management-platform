@@ -1,0 +1,78 @@
+.procedure-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.procedure-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.procedure-card__id {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.procedure-card__info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.procedure-card__info dt {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.procedure-card__info dd {
+  color: var(--color-text);
+  margin: 0;
+  font-family: monospace;
+}
+
+.procedure-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.procedure-card__btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.procedure-card__btn:hover {
+  opacity: 0.85;
+}
+
+.procedure-card__btn--confirm {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.procedure-card__btn--cancel {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.procedure-card__closed {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
