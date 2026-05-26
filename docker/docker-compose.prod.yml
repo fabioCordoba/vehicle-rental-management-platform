@@ -165,6 +165,19 @@ services:
         condition: on-failure
         max_attempts: 3
 
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  frontend-service:
+    image: fabiocordobadev/personal-frontend:latest
+    container_name: vehicle-rental-frontend
+    restart: unless-stopped
+    networks:
+      - vehicle-rental-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
+
   # ── Nginx API Gateway — Certbot gestiona SSL en el servidor ─────────────
   nginx-gateway:
     image: nginx:1.27-alpine
@@ -182,6 +195,8 @@ services:
         condition: service_healthy
       operation-service:
         condition: service_healthy
+      frontend-service:
+        condition: service_started
     networks:
       - vehicle-rental-network
     healthcheck:

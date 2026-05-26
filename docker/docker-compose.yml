@@ -106,6 +106,19 @@ services:
     networks:
       - vehicle-rental-network
 
+  # ── Frontend — React/Vite app served via nginx ────────────────────────────
+  frontend-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        VITE_API_URL: "http://localhost:8025"
+    image: fabiocordobadev/personal-frontend:latest
+    container_name: vehicle-rental-frontend
+    restart: unless-stopped
+    networks:
+      - vehicle-rental-network
+
   # ── Nginx API Gateway — exposed on port 8025 ──────────────────────────────
   nginx-gateway:
     image: nginx:1.27-alpine
@@ -120,6 +133,7 @@ services:
       - authentication-service
       - vehicle-service
       - operation-service
+      - frontend-service
     networks:
       - vehicle-rental-network
     healthcheck:
